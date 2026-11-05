@@ -106,7 +106,7 @@ function show(photos) {
     const a = document.createElement("a");
     a.href = `https://drive.google.com/file/d/${fid}/view`; a.target = "_blank"; a.rel = "noopener";
     const img = document.createElement("img");
-    img.loading = "lazy"; img.alt = "Photo of you"; img.src = `https://drive.google.com/thumbnail?id=${fid}&sz=w400`;
+    img.loading = "lazy"; img.alt = "Photo of you"; img.src = `/api/thumb/${id}/${fid}`;
     a.appendChild(img);
     const dl = document.createElement("a");
     dl.className = "dl"; dl.textContent = "Download"; dl.href = `https://drive.google.com/uc?export=download&id=${fid}`;

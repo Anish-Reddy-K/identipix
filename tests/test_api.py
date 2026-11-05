@@ -53,7 +53,7 @@ def _selfie_jpeg(c):
     return cv2.imencode(".jpg", crop)[1].tobytes()
 
 
-def test_full_flow(client):
+def test_full_flow(client, monkeypatch):
     r = client.post("/api/events", json={"folder_url": f"https://drive.google.com/drive/folders/{FOLDER}?usp=sharing"})
     assert r.status_code == 201
     ev = r.json()
@@ -74,6 +74,12 @@ def test_full_flow(client):
     blank = cv2.imencode(".jpg", client.images["blank"])[1].tobytes()
     r = client.post(f"/api/events/{eid}/match", files={"selfie": ("s.jpg", blank, "image/jpeg")})
     assert r.status_code == 422 and r.json() == {"error": "no_face"}
+
+    # thumbnail proxy: cached, event photos only
+    monkeypatch.setattr(drive, "fetch_thumb", lambda fid: b"jpegbytes")
+    r = client.get(f"/api/thumb/{eid}/crowd")
+    assert r.status_code == 200 and r.content == b"jpegbytes" and "max-age" in r.headers["cache-control"]
+    assert client.get(f"/api/thumb/{eid}/not-in-event").status_code == 404
 
     # admin endpoints need token
     assert client.get(f"/api/events/{eid}/qr.svg?t=wrong").status_code == 403

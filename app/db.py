@@ -115,6 +115,11 @@ def photo_names(event_id: str, file_ids: list[str]) -> dict[str, str]:
         return {r["file_id"]: r["name"] for r in rows}
 
 
+def has_photo(event_id: str, file_id: str) -> bool:
+    with conn() as c:
+        return c.execute("SELECT 1 FROM photos WHERE event_id=? AND file_id=?", (event_id, file_id)).fetchone() is not None
+
+
 def delete_event(id: str) -> None:
     with conn() as c:
         for t in ("faces", "photos"):

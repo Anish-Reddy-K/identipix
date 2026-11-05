@@ -122,3 +122,15 @@ def fetch_image(file: dict):
     if img is None:
         raise DriveError(f"Could not decode {file.get('name')}")
     return img
+
+
+def fetch_thumb(file_id: str, size: int = 400) -> bytes:
+    """JPEG bytes of a small thumbnail (links are short-lived, so look up a fresh one)."""
+    r = _get(f"{API}/{file_id}", params={"fields": "thumbnailLink", "supportsAllDrives": "true", "key": config.GOOGLE_API_KEY})
+    link = r.json().get("thumbnailLink") if r.status_code == 200 else None
+    if not link:
+        raise DriveError("No thumbnail")
+    r = _get(re.sub(r"=s\d+$", f"=s{size}", link))
+    if r.status_code != 200:
+        raise DriveError(f"Thumbnail failed ({r.status_code})")
+    return r.content

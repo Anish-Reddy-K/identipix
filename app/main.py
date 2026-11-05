@@ -134,6 +134,18 @@ def match(event_id: str, request: Request, selfie: UploadFile = File(...)):
     return {"photos": [{"file_id": f, "name": names.get(f, ""), "score": round(s, 4)} for f, s in results]}
 
 
+@app.get("/api/thumb/{event_id}/{file_id}")
+def thumb(event_id: str, file_id: str):
+    _event_or_404(event_id)
+    if not db.has_photo(event_id, file_id):  # only photos of this event, never an open proxy
+        raise HTTPException(404, "Photo not found")
+    try:
+        data = drive.fetch_thumb(file_id)
+    except Exception:
+        raise HTTPException(502, "Thumbnail unavailable")
+    return Response(data, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=86400"})
+
+
 @app.get("/api/events/{event_id}/qr.svg")
 def qr(event_id: str, request: Request, t: str = ""):
     ev = _event_or_404(event_id)
