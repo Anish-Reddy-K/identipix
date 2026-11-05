@@ -16,6 +16,12 @@
   button.danger{background:#b91c1c}
   img.qr{width:200px;height:200px;display:block;margin:12px auto 0}
   .err{color:#b91c1c}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+  .grid button{padding:0;background:none;border:3px solid transparent;border-radius:8px;position:relative;line-height:0}
+  .grid button img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:5px;background:#e5e5e5}
+  .grid button.on{border-color:#2563eb}
+  .grid button.on::after{content:"\2713";position:absolute;top:4px;right:4px;width:22px;height:22px;line-height:22px;text-align:center;font-size:14px;color:#fff;background:#2563eb;border-radius:50%}
+  .hint{color:#555;font-size:14px;margin:4px 0 0}
   .note{background:#fef9c3;border-radius:8px;padding:10px;font-size:14px}
 </style>
 </head>
@@ -32,6 +38,11 @@
     <div class="row" style="margin-top:8px"><input id="link" readonly><button id="copy">Copy</button></div>
     <img class="qr" id="qr" alt="QR code for the event link">
   </div>
+  <div class="box" id="hlbox" hidden>
+    <b>Highlights</b> <span id="hlcount" class="hint"></span>
+    <p class="hint">Pick photos every guest should see, like the venue or the food. Tap a photo to add or remove it.</p>
+    <div class="grid" id="hlgrid"></div>
+  </div>
   <p class="note">Bookmark this page. It is the only way to manage this event.</p>
   <button class="danger" id="del">Delete event</button>
 </main>
@@ -45,7 +56,33 @@ $("copy").onclick = async () => {
   try { await navigator.clipboard.writeText($("link").value); } catch { $("link").select(); document.execCommand("copy"); }
   $("copy").textContent = "Copied"; setTimeout(() => $("copy").textContent = "Copy", 1500);
 };
-let timer;
+let timer, wasIndexing = true, picked = new Set();
+async function loadPhotos() {
+  const r = await fetch(`/api/events/${id}/photos?t=${encodeURIComponent(t)}`);
+  if (!r.ok) return;
+  const {photos} = await r.json();
+  picked = new Set(photos.filter((p) => p.highlight).map((p) => p.file_id));
+  const g = $("hlgrid"); g.innerHTML = "";
+  for (const p of photos) {
+    const b = document.createElement("button");
+    b.type = "button"; b.title = p.name; b.className = picked.has(p.file_id) ? "on" : "";
+    const img = document.createElement("img");
+    img.loading = "lazy"; img.alt = p.name; img.src = `/api/thumb/${id}/${encodeURIComponent(p.file_id)}`;
+    b.appendChild(img);
+    b.onclick = async () => {
+      const on = !picked.has(p.file_id);
+      on ? picked.add(p.file_id) : picked.delete(p.file_id);
+      b.classList.toggle("on", on); count();
+      const res = await fetch(`/api/events/${id}/highlights?t=${encodeURIComponent(t)}`, {
+        method: "PUT", headers: {"Content-Type": "application/json"}, body: JSON.stringify({file_ids: [...picked]})
+      });
+      if (!res.ok) { on ? picked.delete(p.file_id) : picked.add(p.file_id); b.classList.toggle("on", !on); count(); }
+    };
+    g.appendChild(b);
+  }
+  $("hlbox").hidden = !photos.length; count();
+}
+function count() { $("hlcount").textContent = picked.size ? `(${picked.size} selected)` : ""; }
 async function poll() {
   const r = await fetch(`/api/events/${id}`);
   if (r.status === 404) { $("app").innerHTML = "<h1>Event not found</h1><p>It may have been deleted or expired.</p>"; return; }
@@ -55,6 +92,8 @@ async function poll() {
   $("status").textContent = d.status === "indexing" ? `Processing photos: ${d.done} of ${d.total}`
     : d.status === "ready" ? `Ready: ${d.total} photos processed` : "Something went wrong";
   $("err").textContent = d.error || "";
+  if (wasIndexing && d.status !== "indexing") loadPhotos();   // list is complete once indexing ends
+  wasIndexing = d.status === "indexing";
   if (d.status === "indexing") timer = setTimeout(poll, 2000);
 }
 $("del").onclick = async () => {

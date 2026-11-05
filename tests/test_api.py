@@ -69,6 +69,13 @@ def test_full_flow(client, monkeypatch):
     photos = r.json()["photos"]
     assert [p["file_id"] for p in photos] == ["crowd"]
     assert photos[0]["score"] > 0.9
+    assert r.json()["maybe"] == []
+
+    # below the strong cut-off but above the floor -> "maybe", not "photos"
+    monkeypatch.setattr(config, "STRONG_THRESHOLD", 1.1)
+    r = client.post(f"/api/events/{eid}/match", files={"selfie": ("s.jpg", _selfie_jpeg(client), "image/jpeg")})
+    assert r.json()["photos"] == [] and [p["file_id"] for p in r.json()["maybe"]] == ["crowd"]
+    monkeypatch.setattr(config, "STRONG_THRESHOLD", 0.5)
 
     # no face -> 422
     blank = cv2.imencode(".jpg", client.images["blank"])[1].tobytes()
@@ -76,10 +83,27 @@ def test_full_flow(client, monkeypatch):
     assert r.status_code == 422 and r.json() == {"error": "no_face"}
 
     # thumbnail proxy: cached, event photos only
-    monkeypatch.setattr(drive, "fetch_thumb", lambda fid: b"jpegbytes")
+    monkeypatch.setattr(drive, "fetch_thumb", lambda fid, size=400: b"jpegbytes")
     r = client.get(f"/api/thumb/{eid}/crowd")
     assert r.status_code == 200 and r.content == b"jpegbytes" and "max-age" in r.headers["cache-control"]
     assert client.get(f"/api/thumb/{eid}/not-in-event").status_code == 404
+    assert client.get(f"/api/thumb/{eid}/crowd?s=2048").status_code == 200
+    assert client.get(f"/api/thumb/{eid}/crowd?s=99999").status_code == 400  # only fixed sizes
+
+    # view-all link + highlights (organizer-picked photos shown to everyone)
+    info = client.get(f"/api/events/{eid}").json()
+    assert info["folder_url"] == f"https://drive.google.com/drive/folders/{FOLDER}" and info["highlights"] == []
+    assert client.get(f"/api/events/{eid}/photos?t=bad").status_code == 403
+    listed = client.get(f"/api/events/{eid}/photos?t={tok}").json()["photos"]
+    assert [p["file_id"] for p in listed] == ["blank", "crowd"] and not any(p["highlight"] for p in listed)
+    assert client.put(f"/api/events/{eid}/highlights?t=bad", json={"file_ids": ["crowd"]}).status_code == 403
+    assert client.put(f"/api/events/{eid}/highlights?t={tok}", json={"file_ids": "crowd"}).status_code == 400
+    r = client.put(f"/api/events/{eid}/highlights?t={tok}", json={"file_ids": ["blank", "bogus"]})
+    assert [h["file_id"] for h in r.json()["highlights"]] == ["blank"]  # unknown id ignored
+    assert [h["file_id"] for h in client.get(f"/api/events/{eid}").json()["highlights"]] == ["blank"]
+    client.put(f"/api/events/{eid}/highlights?t={tok}", json={"file_ids": []})
+    assert client.get(f"/api/events/{eid}").json()["highlights"] == []
+    client.put(f"/api/events/{eid}/highlights?t={tok}", json={"file_ids": ["crowd"]})  # left in place: delete must clear it
 
     # admin endpoints need token
     assert client.get(f"/api/events/{eid}/qr.svg?t=wrong").status_code == 403
@@ -89,7 +113,7 @@ def test_full_flow(client, monkeypatch):
 
     assert client.delete(f"/api/events/{eid}?t={tok}").status_code == 204
     with db.conn() as c:
-        for t in ("events", "photos", "faces"):
+        for t in ("events", "photos", "faces", "highlights"):
             assert c.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] == 0
     assert client.get(f"/api/events/{eid}").status_code == 404
     assert client.get(f"/e/{eid}").status_code == 404

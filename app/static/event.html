@@ -12,6 +12,9 @@
   #cam{margin:16px 0;text-align:center}
   video{width:100%;max-height:60vh;background:#000;border-radius:10px;transform:scaleX(-1);object-fit:cover}
   button,label.btn{display:inline-block;margin-top:12px;padding:14px;width:100%;box-sizing:border-box;font-size:16px;font-weight:600;color:#fff;background:#2563eb;border:0;border-radius:8px;cursor:pointer;text-align:center}
+  a.btn{display:block;margin-top:12px;padding:14px;box-sizing:border-box;font-size:16px;font-weight:600;border-radius:8px;text-align:center;text-decoration:none}
+  a.btn.alt{background:#fff;color:#2563eb;border:1px solid #2563eb}
+  h2{font-size:18px;margin:28px 0 8px}
   button.alt{background:#fff;color:#2563eb;border:1px solid #2563eb}
   #msg{margin:12px 0;min-height:1.2em}
   #msg.err{color:#b91c1c}
@@ -19,6 +22,8 @@
   @media(min-width:640px){.grid{grid-template-columns:repeat(4,1fr)}}
   .item img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:#e5e5e5;display:block}
   .item a.dl{display:block;font-size:13px;margin-top:4px;color:#2563eb}
+  details{margin-top:20px}
+  summary{cursor:pointer;color:#555;margin-bottom:8px}
   footer{color:#666;font-size:13px;margin-top:32px}
   [hidden]{display:none!important}
 </style>
@@ -39,19 +44,31 @@
   <div id="results" hidden>
     <div id="count"></div>
     <div class="grid" id="grid"></div>
+    <details id="maybeBox" hidden>
+      <summary id="maybeSum"></summary>
+      <div class="grid" id="maybeGrid"></div>
+    </details>
     <button class="alt" id="retake">Retake</button>
   </div>
+  <section id="hl" hidden>
+    <h2>Highlights</h2>
+    <div class="grid" id="hlGrid"></div>
+  </section>
+  <a class="btn alt" id="viewAll" target="_blank" rel="noopener" hidden>View all photos</a>
   <footer>Your selfie is processed in memory and never stored.</footer>
 </main>
 <script>
 const id = location.pathname.split("/").pop();
 const $ = (s) => document.getElementById(s);
-let stream = null;
+let stream = null, hlKey = null;
 
 async function loadInfo() {
   try {
     const d = await (await fetch(`/api/events/${id}`)).json();
     $("title").textContent = d.name || "Find your photos";
+    const va = $("viewAll"); va.href = d.folder_url; va.hidden = false;
+    const key = d.highlights.map((h) => h.file_id).join();
+    if (key !== hlKey) { hlKey = key; fill($("hlGrid"), d.highlights, "Event photo"); $("hl").hidden = !d.highlights.length; }
     const n = $("notice");
     if (d.status === "indexing") { n.hidden = false; n.textContent = `Still processing photos (${d.done}/${d.total}) - results may be incomplete`; }
     else n.hidden = true;
@@ -90,28 +107,70 @@ async function send(blob) {
     if (r.status === 422) return fail("Couldn't see a face - try again.");
     if (r.status === 429) return fail("Too many tries. Wait a minute and try again.");
     if (!r.ok) return fail(d.detail || "Something went wrong. Try again.");
-    show(d.photos);
+    show(d.photos, d.maybe || []);
   } catch { fail("Network problem. Try again."); }
 }
-function fail(m) { $("msg").className = "err"; $("msg").textContent = m; $("results").hidden = false; $("count").textContent = ""; $("grid").innerHTML = ""; }
+function fail(m) {
+  $("msg").className = "err"; $("msg").textContent = m; $("results").hidden = false;
+  $("count").textContent = ""; $("grid").innerHTML = ""; $("maybeBox").hidden = true;
+}
 
-function show(photos) {
-  $("msg").textContent = ""; $("results").hidden = false;
-  $("count").textContent = photos.length ? `Found you in ${photos.length} photo${photos.length === 1 ? "" : "s"}`
-    : "No photos found. Try another selfie with good light, facing the camera.";
-  const g = $("grid"); g.innerHTML = "";
+// On phones, "Download" goes to the Files app. The share sheet can save straight to Photos.
+const canSaveToPhotos = matchMedia("(pointer:coarse)").matches && !!navigator.canShare &&
+  navigator.canShare({files: [new File([""], "a.jpg", {type: "image/jpeg"})]});
+
+function saveToPhotos(link, p) {
+  let file = null;
+  link.textContent = "Save to Photos";
+  link.href = "#";
+  link.onclick = async (e) => {
+    e.preventDefault();
+    try {
+      if (!file) {
+        link.textContent = "Saving...";
+        const r = await fetch(`/api/thumb/${id}/${encodeURIComponent(p.file_id)}?s=2048`);
+        if (!r.ok) throw new Error("fetch");
+        file = new File([await r.blob()], p.name || "photo.jpg", {type: "image/jpeg"});
+      }
+      await navigator.share({files: [file]});
+      link.textContent = "Save to Photos";
+    } catch (err) {
+      if (err.name === "AbortError") link.textContent = "Save to Photos";          // user closed the sheet
+      else if (file && err.name === "NotAllowedError") link.textContent = "Tap again to save";  // tap expired while loading
+      else { link.textContent = "Download"; link.onclick = null; link.href = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(p.file_id)}`; }
+    }
+  };
+}
+
+function fill(grid, photos, alt = "Photo of you") {
+  grid.innerHTML = "";
   for (const p of photos) {
     const fid = encodeURIComponent(p.file_id);
     const d = document.createElement("div"); d.className = "item";
     const a = document.createElement("a");
     a.href = `https://drive.google.com/file/d/${fid}/view`; a.target = "_blank"; a.rel = "noopener";
     const img = document.createElement("img");
-    img.loading = "lazy"; img.alt = "Photo of you"; img.src = `/api/thumb/${id}/${fid}`;
+    img.loading = "lazy"; img.alt = alt; img.src = `/api/thumb/${id}/${fid}`;
     a.appendChild(img);
     const dl = document.createElement("a");
     dl.className = "dl"; dl.textContent = "Download"; dl.href = `https://drive.google.com/uc?export=download&id=${fid}`;
-    d.append(a, dl); g.appendChild(d);
+    if (canSaveToPhotos) saveToPhotos(dl, p);
+    d.append(a, dl); grid.appendChild(d);
   }
+}
+
+function show(photos, maybe) {
+  $("msg").textContent = ""; $("results").hidden = false;
+  const none = !photos.length && !maybe.length;
+  $("count").textContent = photos.length ? `Found you in ${photos.length} photo${photos.length === 1 ? "" : "s"}`
+    : none ? "No photos found. Try another selfie with good light, facing the camera."
+    : "No sure matches. These might be you:";
+  fill($("grid"), photos);
+  const box = $("maybeBox");
+  box.hidden = !maybe.length;
+  box.open = !photos.length;  // nothing else to show: open it
+  $("maybeSum").textContent = `Might be you (${maybe.length})`;
+  fill($("maybeGrid"), maybe);
 }
 
 $("shoot").onclick = async () => {

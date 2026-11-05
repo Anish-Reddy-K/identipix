@@ -68,3 +68,12 @@ def test_detect_known_face_count():
     assert len(found) == 23  # measured once on this sample; guards against regressions
     e = faces.embed(img, faces.largest(found))
     assert e.shape == (128,) and np.linalg.norm(e) == pytest.approx(1.0, abs=1e-4)
+
+
+def test_embed_selfie_is_unit_and_close_to_plain_embed():
+    img = cv2.imread(str(CROWD))
+    img = cv2.resize(img, (1024, int(1024 * img.shape[0] / img.shape[1])))
+    row = faces.largest(faces.detect(img))
+    a, b = faces.embed(img, row), faces.embed_selfie(img, row)
+    assert np.linalg.norm(b) == pytest.approx(1.0, abs=1e-4)
+    assert float(a @ b) > 0.8

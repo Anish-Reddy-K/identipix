@@ -28,6 +28,10 @@ CREATE TABLE IF NOT EXISTS faces(
   emb BLOB NOT NULL
 );
 CREATE INDEX IF NOT EXISTS faces_event ON faces(event_id);
+CREATE TABLE IF NOT EXISTS highlights(   -- photos the organizer wants every attendee to see
+  event_id TEXT, file_id TEXT,
+  PRIMARY KEY(event_id, file_id)
+);
 """
 
 
@@ -120,9 +124,35 @@ def has_photo(event_id: str, file_id: str) -> bool:
         return c.execute("SELECT 1 FROM photos WHERE event_id=? AND file_id=?", (event_id, file_id)).fetchone() is not None
 
 
+def list_photos(event_id: str) -> list[dict]:
+    with conn() as c:
+        rows = c.execute(
+            "SELECT p.file_id, p.name, h.file_id IS NOT NULL AS highlight FROM photos p "
+            "LEFT JOIN highlights h ON h.event_id=p.event_id AND h.file_id=p.file_id "
+            "WHERE p.event_id=? ORDER BY p.name",
+            (event_id,),
+        )
+        return [{"file_id": r["file_id"], "name": r["name"], "highlight": bool(r["highlight"])} for r in rows]
+
+
+def list_highlights(event_id: str) -> list[dict]:
+    return [{"file_id": p["file_id"], "name": p["name"]} for p in list_photos(event_id) if p["highlight"]]
+
+
+def set_highlights(event_id: str, file_ids: list[str]) -> None:
+    """Replace the highlight set. Ids that are not photos of this event are ignored."""
+    with conn() as c:
+        c.execute("DELETE FROM highlights WHERE event_id=?", (event_id,))
+        c.executemany(
+            "INSERT OR IGNORE INTO highlights(event_id, file_id) "
+            "SELECT event_id, file_id FROM photos WHERE event_id=? AND file_id=?",
+            [(event_id, f) for f in file_ids],
+        )
+
+
 def delete_event(id: str) -> None:
     with conn() as c:
-        for t in ("faces", "photos"):
+        for t in ("faces", "photos", "highlights"):
             c.execute(f"DELETE FROM {t} WHERE event_id=?", (id,))
         c.execute("DELETE FROM events WHERE id=?", (id,))
 

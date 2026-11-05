@@ -108,7 +108,27 @@ def get_event(event_id: str):
     ev = _event_or_404(event_id)
     indexer.maybe_sync(ev)
     ev = db.get_event(event_id)
-    return {k: ev[k] for k in ("name", "status", "done", "total", "error")}
+    return {
+        **{k: ev[k] for k in ("name", "status", "done", "total", "error")},
+        "folder_url": f"https://drive.google.com/drive/folders/{ev['folder_id']}",
+        "highlights": db.list_highlights(event_id),
+    }
+
+
+@app.get("/api/events/{event_id}/photos")
+def list_event_photos(event_id: str, t: str = ""):
+    _check_token(_event_or_404(event_id), t)
+    return {"photos": db.list_photos(event_id)}
+
+
+@app.put("/api/events/{event_id}/highlights")
+def put_highlights(event_id: str, body: dict, t: str = ""):
+    _check_token(_event_or_404(event_id), t)
+    ids = body.get("file_ids")
+    if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids) or len(ids) > 1000:
+        raise HTTPException(400, "file_ids must be a list of ids")
+    db.set_highlights(event_id, ids)
+    return {"highlights": db.list_highlights(event_id)}
 
 
 @app.post("/api/events/{event_id}/match")
@@ -129,18 +149,24 @@ def match(event_id: str, request: Request, selfie: UploadFile = File(...)):
     found = faces.detect(img)
     if len(found) == 0:
         return JSONResponse({"error": "no_face"}, status_code=422)
-    results = matcher.match(event_id, faces.embed(img, faces.largest(found)))
+    results = matcher.match(event_id, faces.embed_selfie(img, faces.largest(found)))
     names = db.photo_names(event_id, [f for f, _ in results])
-    return {"photos": [{"file_id": f, "name": names.get(f, ""), "score": round(s, 4)} for f, s in results]}
+    items = [{"file_id": f, "name": names.get(f, ""), "score": round(s, 4)} for f, s in results]
+    return {
+        "photos": [i for i in items if i["score"] >= config.STRONG_THRESHOLD],
+        "maybe": [i for i in items if i["score"] < config.STRONG_THRESHOLD],
+    }
 
 
 @app.get("/api/thumb/{event_id}/{file_id}")
-def thumb(event_id: str, file_id: str):
+def thumb(event_id: str, file_id: str, s: int = 400):
     _event_or_404(event_id)
+    if s not in (400, 2048):  # grid thumbnail, or large version for "save to phone"
+        raise HTTPException(400, "Unsupported size")
     if not db.has_photo(event_id, file_id):  # only photos of this event, never an open proxy
         raise HTTPException(404, "Photo not found")
     try:
-        data = drive.fetch_thumb(file_id)
+        data = drive.fetch_thumb(file_id, s)
     except Exception:
         raise HTTPException(502, "Thumbnail unavailable")
     return Response(data, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=86400"})

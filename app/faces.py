@@ -39,6 +39,17 @@ def embed(img, face_row) -> np.ndarray:
     return f / np.linalg.norm(f)
 
 
+def embed_selfie(img, face_row) -> np.ndarray:
+    """Like embed(), but averaged with the mirrored face: steadier for a single odd photo."""
+    _, rec = _models()
+    aligned = rec.alignCrop(img, face_row)
+    out = np.zeros(128, np.float32)
+    for crop in (aligned, cv2.flip(aligned, 1)):
+        f = rec.feature(crop).flatten().astype(np.float32)
+        out += f / np.linalg.norm(f)
+    return out / np.linalg.norm(out)
+
+
 def largest(faces: np.ndarray):
     return faces[np.argmax(faces[:, 2] * faces[:, 3])]
 
