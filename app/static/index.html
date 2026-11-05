@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Identipix</title>
+<style>
+  body{font-family:system-ui,sans-serif;margin:0;color:#111;background:#fafafa}
+  main{max-width:640px;margin:0 auto;padding:24px 16px}
+  h1{margin:0 0 4px}
+  p.sub{color:#555;margin:0 0 24px}
+  label{display:block;font-weight:600;margin:16px 0 6px}
+  input{width:100%;box-sizing:border-box;padding:12px;font-size:16px;border:1px solid #ccc;border-radius:8px}
+  button{margin-top:20px;width:100%;padding:14px;font-size:16px;font-weight:600;color:#fff;background:#2563eb;border:0;border-radius:8px;cursor:pointer}
+  button:disabled{opacity:.6;cursor:default}
+  #err{color:#b91c1c;margin-top:12px;min-height:1.2em}
+  small{color:#666}
+</style>
+</head>
+<body>
+<main>
+  <h1>Identipix</h1>
+  <p class="sub">Paste a public Google Drive folder of event photos. Guests find their own photos with a selfie.</p>
+  <form id="f">
+    <label for="url">Drive folder link</label>
+    <input id="url" required placeholder="https://drive.google.com/drive/folders/...">
+    <small>Share the folder as "Anyone with the link".</small>
+    <label for="name">Event name (optional)</label>
+    <input id="name" maxlength="100">
+    <button id="btn">Create</button>
+    <div id="err" role="alert"></div>
+  </form>
+</main>
+<script>
+const f = document.getElementById("f"), err = document.getElementById("err"), btn = document.getElementById("btn");
+f.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  err.textContent = ""; btn.disabled = true; btn.textContent = "Checking folder...";
+  try {
+    const r = await fetch("/api/events", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({folder_url: url.value, name: name.value})
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || "Something went wrong");
+    location.href = d.admin_url;
+  } catch (x) {
+    err.textContent = x.message; btn.disabled = false; btn.textContent = "Create";
+  }
+});
+</script>
+</body>
+</html>
