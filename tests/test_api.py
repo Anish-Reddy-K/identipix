@@ -196,6 +196,13 @@ def test_static_files_have_a_short_cache(client):
     assert r.status_code == 200 and r.headers["cache-control"] == "public, max-age=300"
 
 
+def test_pages_use_versioned_asset_urls(client):
+    eid = client.post("/api/events", json={"folder_url": FOLDER}).json()["id"]
+    for path in ("/", f"/e/{eid}", f"/a/{eid}"):
+        html = client.get(path).text
+        assert "/static/brand.css?v=" in html and "/static/chrome.js?v=" in html
+
+
 def test_healthz(client):
     assert client.get("/healthz").json() == {"ok": True}
 

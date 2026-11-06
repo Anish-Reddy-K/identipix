@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import io
 import logging
 import secrets
@@ -10,7 +11,7 @@ import numpy as np
 import segno
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 
 from . import config, db, drive, faces, indexer
 from .ratelimit import RateLimiter
@@ -73,22 +74,31 @@ def healthz():
     return {"ok": True}
 
 
+def _page(name: str) -> HTMLResponse:
+    """Serve a page with versioned asset URLs (?v=hash), so a CDN or browser never keeps stale CSS/JS after a deploy."""
+    html = (STATIC / name).read_text()
+    for asset in ("brand.css", "chrome.js"):
+        v = hashlib.md5((STATIC / asset).read_bytes()).hexdigest()[:8]
+        html = html.replace(f"/static/{asset}", f"/static/{asset}?v={v}")
+    return HTMLResponse(html)
+
+
 # ---- pages ----
 @app.get("/")
 def index_page():
-    return FileResponse(STATIC / "index.html")
+    return _page("index.html")
 
 
 @app.get("/e/{event_id}")
 def event_page(event_id: str):
     if db.get_event(event_id) is None:
         return HTMLResponse("<h1>Event not found</h1><p>It may have expired or been deleted.</p>", status_code=404)
-    return FileResponse(STATIC / "event.html")
+    return _page("event.html")
 
 
 @app.get("/a/{event_id}")
 def admin_page(event_id: str):
-    return FileResponse(STATIC / "admin.html")
+    return _page("admin.html")
 
 
 # ---- api ----
