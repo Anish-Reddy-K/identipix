@@ -42,7 +42,7 @@ To limit abuse, the number of requests per IP address is counted in memory. It i
 
 ## How long we keep data
 
-Events and their fingerprints are deleted automatically after 30 days, or immediately when the organizer deletes the event. The operator of a self-hosted copy may change the 30 days.
+Events and their fingerprints are deleted automatically after 30 days, or immediately when the organizer deletes the event. Anyone running their own copy can change the 30 days.
 
 ## Your choices
 
@@ -54,9 +54,9 @@ Events and their fingerprints are deleted automatically after 30 days, or immedi
 
 You are responsible for having the right to share the photos and for telling guests that their selfie will be used to find their photos. A short sign at the event is enough, for example: "Photos here are found with face matching. Your selfie is processed in memory and never stored."
 
-## Self-hosted copies
+## Who runs it
 
-Identipix is open source. If someone else runs their own copy, they are the one responsible for that copy's data. This policy describes how the software behaves by default.
+The hosted service at identipix.com is run by Identipix in Waterloo, Canada, and this policy covers it. Identipix is also open source: if someone else runs their own copy, they are responsible for that copy's data, and this policy does not cover it.
 
 ## Contact
 

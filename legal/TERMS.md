@@ -6,7 +6,7 @@ By using Identipix you agree to these terms. They are short on purpose.
 
 ## What Identipix does
 
-It lets an event organizer share a public Google Drive folder of photos, and lets guests find the photos they appear in using a selfie.
+It lets an event organizer share a public Google Drive folder of photos, and lets guests find the photos they appear in using a selfie. The hosted service at identipix.com is free to use. We may change, limit or stop it at any time.
 
 ## Using it
 
