@@ -65,7 +65,11 @@ def _base(request: Request) -> str:
 
 @app.get("/healthz")
 def healthz():
-    db.get_event("healthz")  # touches the database, so "ok" means the whole app works
+    db.get_event("healthz")  # touches the database
+    try:
+        faces.check_models()  # and the face models, so "ok" means the whole app works
+    except Exception:
+        return JSONResponse({"ok": False, "error": "models"}, status_code=503)
     return {"ok": True}
 
 

@@ -41,15 +41,6 @@
 
 [Privacy Policy](legal/PRIVACY.md) · [Terms](legal/TERMS.md)
 
-## Run your own copy (optional)
-
-You can run Identipix yourself instead of using identipix.com. You need Docker, a Google API key (Drive API enabled) and a Cloudflare tunnel (camera access needs HTTPS).
-
-```
-cp .env.example .env     # add GOOGLE_API_KEY, PUBLIC_BASE_URL, TUNNEL_TOKEN
-docker compose up -d --build
-```
-
 ## Develop
 
 Python 3.12, FastAPI, OpenCV, SQLite, plain HTML/CSS/JS.
@@ -59,6 +50,18 @@ uv venv --python 3.12 .venv
 uv pip install --python .venv/bin/python fastapi "uvicorn[standard]" opencv-python-headless numpy httpx python-multipart segno pytest
 .venv/bin/python -m pytest
 ```
+
+<details>
+<summary>Run your own copy</summary>
+
+Identipix is open source, so you can host it yourself. You need Docker, a Google API key (Drive API enabled) and a Cloudflare tunnel (camera access needs HTTPS).
+
+```
+cp .env.example .env     # add GOOGLE_API_KEY, PUBLIC_BASE_URL, TUNNEL_TOKEN
+docker compose up -d --build
+```
+
+</details>
 
 Matching is not perfect: look-alikes can show up under "Might be you". Tune thresholds in `.env` and measure with `eval/eval.py`.
 

@@ -19,6 +19,11 @@ def _models():
     return _local.det, _local.rec
 
 
+def check_models() -> None:
+    """Raises if the face models cannot be loaded (so a broken install fails loudly, not silently)."""
+    _models()
+
+
 def detect(img) -> np.ndarray:
     """Rows of YuNet output (x,y,w,h,landmarks...,score), small faces dropped."""
     det, _ = _models()

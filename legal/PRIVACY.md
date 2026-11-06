@@ -90,7 +90,7 @@ You choose which photos to upload. You must have the right to share them, and yo
 
 Identipix is not meant for children under 13, and guests under 16 should use it with a parent or guardian.
 
-## Open source and self-hosting
+## Open source
 
 Identipix is open source. This policy covers the hosted service at identipix.com. If someone runs their own copy, they are responsible for that copy's data and this policy does not cover it.
 

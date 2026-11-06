@@ -38,6 +38,12 @@ def _run(event_id: str) -> None:
             if ev is None:
                 return
             try:
+                faces.check_models()
+            except Exception as e:
+                log.error("face models unavailable: %s", e)
+                db.update_event(event_id, status="error", error="Face matching is temporarily unavailable. Please try again later.")
+                return
+            try:
                 images = drive.list_images(ev["folder_id"])
             except Exception as e:
                 log.error("listing failed for %s: %s", event_id, e)

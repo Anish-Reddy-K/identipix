@@ -1,0 +1,22 @@
+name: tests
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install fastapi "uvicorn[standard]" opencv-python-headless numpy httpx python-multipart segno pytest
+      - name: Download face models
+        run: |
+          mkdir -p models
+          curl -fsSL -o models/face_detection_yunet_2023mar.onnx https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx
+          curl -fsSL -o models/face_recognition_sface_2021dec.onnx https://github.com/opencv/opencv_zoo/raw/main/models/face_recognition_sface/face_recognition_sface_2021dec.onnx
+      - name: Test
+        run: python -m pytest -q

@@ -181,6 +181,16 @@ def test_folder_over_the_photo_limit_is_refused(client, monkeypatch):
     assert db.processed_file_ids(eid) == set()
 
 
+def test_broken_models_fail_the_event_not_silently(client, monkeypatch):
+    def boom():
+        raise RuntimeError("no models")
+    monkeypatch.setattr(faces, "check_models", boom)
+    eid = client.post("/api/events", json={"folder_url": FOLDER}).json()["id"]
+    d = _wait_ready(client, eid)
+    assert d["status"] == "error" and "unavailable" in d["error"]
+    assert client.get("/healthz").status_code == 503
+
+
 def test_healthz(client):
     assert client.get("/healthz").json() == {"ok": True}
 

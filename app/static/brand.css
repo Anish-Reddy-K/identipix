@@ -121,7 +121,7 @@ a.gh:hover,a.gh:active{color:var(--pink-text);box-shadow:var(--shadow-inset)}
 .footer-links a:hover{color:var(--pink-text);text-decoration:underline}
 .footer-copy{color:var(--text-2)}
 
-@media(prefers-reduced-motion:reduce){button,label.btn,a.btn,input,a.social{transition:none}}
+@media(prefers-reduced-motion:reduce){button,label.btn,a.btn,input,a.social,input[type=checkbox]::after{transition:none}}
 
 /* bookmark banner (top of admin page) */
 .bookmark{display:flex;align-items:center;gap:14px;padding:14px 16px;margin:0 0 26px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-light)}
@@ -163,8 +163,11 @@ a.gh:hover,a.gh:active{color:var(--pink-text);box-shadow:var(--shadow-inset)}
 /* consent checkbox (neumorphic) */
 .check{display:flex;align-items:flex-start;gap:12px;margin:16px 0 0;font-weight:500;font-size:15px;color:var(--text)}
 .check a{color:var(--pink-text);font-weight:600}
-input[type=checkbox]{flex:none;appearance:none;-webkit-appearance:none;width:24px;height:24px;margin:1px 0 0;padding:0;border:1px solid var(--border);border-radius:7px;background:var(--bg);box-shadow:var(--shadow-inset);cursor:pointer;position:relative}
-input[type=checkbox]:checked{background:var(--gradient);border-color:transparent}
-input[type=checkbox]:checked::after{content:"";position:absolute;left:8px;top:3px;width:6px;height:12px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+input[type=checkbox]{flex:none;appearance:none;-webkit-appearance:none;width:26px;height:26px;margin:0;padding:0;border:1px solid var(--border);border-radius:8px;background:var(--bg);box-shadow:var(--shadow-inset);cursor:pointer;position:relative;transition:var(--transition)}
+input[type=checkbox]:checked{border-color:transparent;background:var(--gradient);box-shadow:var(--shadow-light)}
+input[type=checkbox]::after{content:"";position:absolute;left:50%;top:46%;width:6px;height:12px;border:solid #fff;border-width:0 2.5px 2.5px 0;border-radius:1px;transform:translate(-50%,-50%) rotate(45deg) scale(0);transition:transform .15s ease}
+input[type=checkbox]:checked::after{transform:translate(-50%,-50%) rotate(45deg) scale(1)}
+input[type=checkbox]:focus-visible{outline:2px solid var(--purple);outline-offset:3px}
+input[type=checkbox]:focus:not(:focus-visible){outline:none}
 #consent h2{margin-top:0}
 #consent p{margin:0;color:var(--text-2)}
