@@ -8,7 +8,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 import segno
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 
@@ -61,6 +61,16 @@ def _check_token(ev, t: str | None) -> None:
 
 def _base(request: Request) -> str:
     return config.PUBLIC_BASE_URL or str(request.base_url).rstrip("/")
+
+
+@app.get("/healthz")
+def healthz():
+    db.get_event("healthz")  # touches the database
+    try:
+        faces.check_models()  # and the face models, so "ok" means the whole app works
+    except Exception:
+        return JSONResponse({"ok": False, "error": "models"}, status_code=503)
+    return {"ok": True}
 
 
 # ---- pages ----
@@ -133,7 +143,9 @@ def put_highlights(event_id: str, body: dict, t: str = ""):
 
 
 @app.post("/api/events/{event_id}/match")
-def match(event_id: str, request: Request, selfie: UploadFile = File(...)):
+def match(event_id: str, request: Request, selfie: UploadFile = File(...), consent: str = Form("")):
+    if consent != "yes":  # the page asks before the selfie; the server insists, so there is no way around it
+        return JSONResponse({"error": "consent_required"}, status_code=400)
     if not limiter.allow("match", client_ip(request), config.MATCH_RATE_PER_MIN, 60):
         raise HTTPException(429, "Too many requests, try again in a minute")
     _event_or_404(event_id)

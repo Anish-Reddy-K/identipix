@@ -11,69 +11,39 @@
 
 <p align="center">
   Guests take a selfie and see only the event photos they appear in.<br>
-  Free, open source and self-hosted. Photos never leave your Google Drive.
+  Free at <b>identipix.com</b>. Open source.
 </p>
 
 <p align="center">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-D81B60"></a>
   <a href="https://github.com/Anish-Reddy-K/identipix/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/Anish-Reddy-K/identipix?style=flat&color=8E24AA"></a>
   <img alt="Selfies never stored" src="https://img.shields.io/badge/selfies-never%20stored-D81B60">
-  <img alt="Self-hosted" src="https://img.shields.io/badge/self--hosted-8E24AA">
 </p>
 
 <p align="center">
-  <a href="#how-it-works">How it works</a> &nbsp;&middot;&nbsp;
-  <a href="#privacy-by-design">Privacy</a> &nbsp;&middot;&nbsp;
-  <a href="#self-host-in-5-minutes">Self-host</a> &nbsp;&middot;&nbsp;
-  <a href="https://github.com/Anish-Reddy-K/identipix/issues">Issues</a>
+  <a href="https://identipix.com"><img alt="Try it free at identipix.com" src="https://img.shields.io/badge/Try%20it%20free-identipix.com-D81B60?style=for-the-badge"></a>
 </p>
 
 <!-- Demo video goes here -->
 
-## Why
-
-After an event, the photographer shares a folder with hundreds of photos. Nobody wants to scroll through all of them to find the five where they appear.
-
-Identipix wraps a **public Google Drive folder**. The organizer pastes the link and gets an event link and a QR code. A guest opens it, takes a selfie, and sees only their photos, then saves them straight to their phone.
-
 ## How it works
 
-1. **Organizer** pastes a Drive folder link. Identipix reads the photos once and stores a numeric "face fingerprint" for each face it finds (in our test, 132 photos took about 10 seconds on a Mac).
-2. **Guest** opens the event link (or scans the QR) and takes a selfie. It is turned into a fingerprint in memory and compared with the event's fingerprints. A match takes well under a second.
-3. **Results** show the photos they appear in, as "Found you" (confident) and "Might be you" (borderline). They tap a photo to open the original in Drive, or save it to their phone.
+1. Paste a public Google Drive folder at [identipix.com](https://identipix.com). Get an event link and QR code.
+2. Guests scan it and take a selfie. No app, no sign-up.
+3. They see only their photos, open them in Drive, or save them to their phone.
 
-The organizer can also pick **Highlights** (venue, food, anything everyone should see) and guests always get a **View all photos** link to the full folder.
+## Privacy
 
-## Privacy by design
+- Guests agree to face matching first. Selfies are matched in memory and never saved.
+- Photos stay in your Drive. Only face fingerprints (numbers, not images) are stored.
+- Events are deleted after 30 days, or any time by the organizer.
+- No accounts, cookies or analytics.
 
-- **Selfies are never saved.** They are read into memory, matched, and discarded. Never written to disk, never logged.
-- **Photos are not stored.** They stay in Google Drive. Only face fingerprints (128 numbers per face, not images) and Drive file IDs are kept.
-- **Everything runs on your machine.** Face detection and matching run locally with OpenCV. No selfie or photo goes to an AI service.
-- **No accounts, cookies or analytics.**
-- **Events expire** after 30 days (configurable), and organizers can delete them any time.
+[Privacy Policy](legal/PRIVACY.md) · [Terms](legal/TERMS.md)
 
-Details: [Privacy Policy](legal/PRIVACY.md) and [Terms](legal/TERMS.md). Fingerprints are still biometric data, so tell guests face matching is used.
+## Develop
 
-## Self-host in 5 minutes
-
-You need Docker, a Google API key (Drive API v3 enabled, no OAuth) and a Cloudflare tunnel (HTTPS is required for camera access).
-
-1. Create the key at [Google Cloud Console](https://console.cloud.google.com/apis/credentials) and enable the Drive API.
-2. Create a Cloudflare tunnel and point its public hostname to `http://app:8080`.
-3. `cp .env.example .env`, then fill in `GOOGLE_API_KEY`, `PUBLIC_BASE_URL` and `TUNNEL_TOKEN`.
-4. `docker compose up -d --build`
-
-Open `PUBLIC_BASE_URL`, paste a folder shared as "Anyone with the link", and click **Create**. Bookmark the admin page: it is the only way to manage the event.
-
-## Accuracy and limits
-
-Face matching is not perfect. Look-alikes can slip into "Might be you", and poor light or odd angles can hide a photo. Tune `MATCH_THRESHOLD` and `STRONG_THRESHOLD` in `.env`, and measure with `python -m eval.eval eval/labels.json`, which prints precision and recall per threshold (format: `{"folder_url": "...", "people": {"name": {"selfie": "path.jpg", "photos": ["file_id"]}}}`).
-
-Other limits: the Drive folder must be public by link, and the saved-to-phone copy is the large preview (up to 2048 px), not the original file.
-
-## Tech
-
-Python 3.12, FastAPI, OpenCV (YuNet detector + SFace recognizer), SQLite, vanilla HTML/CSS/JS with no build step. One process, one small database.
+Python 3.12, FastAPI, OpenCV, SQLite, plain HTML/CSS/JS.
 
 ```
 uv venv --python 3.12 .venv
@@ -81,16 +51,22 @@ uv pip install --python .venv/bin/python fastapi "uvicorn[standard]" opencv-pyth
 .venv/bin/python -m pytest
 ```
 
-For local runs, download the two models into `models/` (URLs in the `Dockerfile`). The first test run downloads one sample photo into `tests/data/` (it shows real people, so it is not stored in this repo).
+<details>
+<summary>Run your own copy</summary>
 
-## Contributing
+Identipix is open source, so you can host it yourself. You need Docker, a Google API key (Drive API enabled) and a Cloudflare tunnel (camera access needs HTTPS).
 
-Issues and pull requests are welcome. If Identipix helped you, a star on GitHub helps others find it.
+```
+cp .env.example .env     # add GOOGLE_API_KEY, PUBLIC_BASE_URL, TUNNEL_TOKEN
+docker compose up -d --build
+```
+
+</details>
+
+Matching is not perfect: look-alikes can show up under "Might be you". Tune thresholds in `.env` and measure with `eval/eval.py`.
 
 ## Credits
 
-Built with [Claude](https://github.com/claude), Anthropic's AI assistant, as a pair programmer for the code, tests and docs.
-
-Models: YuNet (MIT) and SFace (Apache-2.0) from OpenCV Zoo. Fonts: Bricolage Grotesque and Inter (SIL OFL), self-hosted. Soft (neumorphic) surfaces use the colours and shadows of Themesberg's [Neumorphism UI](https://github.com/themesberg/neumorphism-ui-bootstrap) (MIT). Social icons from [Simple Icons](https://simpleicons.org) (CC0).
+Built with [Claude](https://github.com/claude). Models: YuNet and SFace (OpenCV Zoo). Fonts: Bricolage Grotesque, Inter. Styling: [Neumorphism UI](https://github.com/themesberg/neumorphism-ui-bootstrap) (MIT).
 
 MIT licensed. Made with love in Waterloo, Canada.

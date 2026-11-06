@@ -77,3 +77,18 @@ def test_embed_selfie_is_unit_and_close_to_plain_embed():
     a, b = faces.embed(img, row), faces.embed_selfie(img, row)
     assert np.linalg.norm(b) == pytest.approx(1.0, abs=1e-4)
     assert float(a @ b) > 0.8
+
+
+def test_check_models_fails_loudly_when_models_are_missing(tmp_path, monkeypatch):
+    import threading
+    monkeypatch.setattr(config, "MODELS_DIR", tmp_path)  # empty folder
+    errors = []
+
+    def run():  # models are cached per thread, so use a fresh one
+        try:
+            faces.check_models()
+        except Exception as e:
+            errors.append(e)
+
+    t = threading.Thread(target=run); t.start(); t.join()
+    assert errors, "a missing model must raise, not be skipped"

@@ -2,61 +2,101 @@
 
 _Last updated: November 5, 2026_
 
-Identipix helps event guests find the photos they appear in. This page explains, in plain language, what the software stores and what it does not.
+Identipix helps guests find the photos they appear in at an event. This policy explains what we collect, why, how long we keep it, and your choices. We wrote it in plain language on purpose.
 
 ## The short version
 
-- Your selfie is used in memory to find matches, then thrown away. It is never saved or logged.
-- We do not store photos. They stay in the organizer's Google Drive.
-- We store a numeric "face fingerprint" for each face found in the event photos, so matching can be fast.
-- Events are deleted automatically after 30 days, or earlier if the organizer deletes them.
-- No accounts, no cookies, no analytics, no ads.
+- **Your selfie is never saved.** It is used in memory to find your photos and then thrown away. We never write it to disk and never log it.
+- **We do not store photos.** They stay in the organizer's Google Drive.
+- **We store a "face fingerprint" for each face in an event's photos.** It is a list of numbers, not an image. It is biometric information, so we ask for your agreement before any selfie is used.
+- **Everything is deleted within 30 days**, or sooner when the organizer deletes the event.
+- **We never sell, rent or share your data.** No ads, no tracking, no analytics, no AI training.
 
-## What is stored
+## Who we are
 
-For each event, the organizer's Google Drive folder is read and these are saved:
+Identipix is run from Waterloo, Ontario, Canada. For privacy questions, write to **contact@identipix.com**.
 
-| What | Why |
+## What we collect
+
+| Who | What | Why |
+| --- | --- | --- |
+| Organizer | Drive folder link and ID, event name, a secret admin link, dates and progress | To run the event page |
+| Organizer | Photo file names and Drive file IDs, and the Highlights they pick | To show and link photos |
+| Event photos | One face fingerprint (128 numbers) per face found | To match selfies |
+| Guest | A selfie, only for a moment, in memory | To find your photos |
+| Guest | A note in your browser tab that you agreed (cleared when the tab closes) | So we do not ask twice |
+| Everyone | Your IP address, counted in memory to limit abuse | To keep the service available |
+
+We do not use accounts, advertising or analytics cookies, or tracking pixels.
+
+## Face fingerprints (biometric information)
+
+- **What they are.** A face fingerprint is a list of numbers that describes how a face looks. It is not a picture. We create one for each face found in an event's photos, and one for your selfie.
+- **How we use them.** Only to compare your selfie with the event's fingerprints so we can show you the photos you appear in. We do not use them to identify anyone by name, build profiles, train AI, or for any other purpose.
+- **Your selfie's fingerprint** exists only for the moment of matching and is then discarded.
+- **Event fingerprints** are kept only while the event exists.
+- **Retention schedule.** Event fingerprints are destroyed when the organizer deletes the event, or 30 days after the event was created, whichever comes first. They are deleted from our database, not just hidden.
+- **No sale or sharing.** We do not sell, lease, trade or disclose fingerprints to anyone.
+- **Where it happens.** Detection and matching run on our own server. No selfie or photo is sent to a third-party AI service.
+
+## Your agreement
+
+Before your selfie is used, the page asks you to agree to face matching and links to this policy. Our server refuses a match without that agreement. You can withdraw it at any time by closing the page (your selfie is already gone) and, if you want the event's data removed, by asking us to delete it (see "Your rights").
+
+You can use an event without agreeing: the Highlights and the "View all photos" link do not need face matching.
+
+## Who else is involved
+
+- **Google Drive** holds the photos. Opening or downloading a photo happens on Google, under Google's own privacy policy. We read the organizer's public folder through Google's Drive API.
+- **Cloudflare** carries traffic between you and our server, so it handles that traffic as it passes. See Cloudflare's privacy policy.
+- **Legal requests.** We would share information only if the law requires it, and we would tell the people affected where we are allowed to.
+
+We do not use any other service providers, advertisers or data brokers.
+
+## How long we keep things
+
+| Data | Kept for |
 | --- | --- |
-| Event name, folder ID, status, progress, dates | To run the event page |
-| A secret admin link token | So only the organizer can manage the event |
-| Photo file IDs and file names | To show matches and link back to Drive |
-| One face fingerprint per face (128 numbers) | To match selfies. It is not an image. It is still treated as biometric data |
-| The list of "Highlights" the organizer picked | To show them to every guest |
+| Selfies | Not kept. Used in memory only |
+| Event details, photo names, fingerprints, Highlights | Until the organizer deletes the event, or 30 days after it was created, whichever is first |
+| IP addresses for abuse limits | In memory only. Gone when the server restarts |
+| Server logs | Short-lived technical logs, rotated automatically. They do not contain selfies |
 
-## What is not stored
+## Security
 
-- Photo files. Photos are read from Google Drive and not kept. Small and large previews pass through the server on their way to your browser and are not saved there. Your browser may cache them for a day.
-- Selfies. A selfie is read into memory, turned into a fingerprint, compared, and discarded. It is never written to disk and never logged.
-- Accounts, names, emails or cookies of guests.
+- Traffic is encrypted over HTTPS.
+- Each event has a secret admin link that only the organizer holds.
+- Selfies are never stored, which removes the biggest risk.
+- Only the operator can reach the server and database.
+- No system is perfectly secure. If a breach affects you, we will tell you and the authorities as the law requires.
 
-## Your IP address
+## Where your data lives
 
-To limit abuse, the number of requests per IP address is counted in memory. It is not saved to the database and is lost when the server restarts. The server's own request logs may record standard details such as time, page and status.
+On our own server in Canada. If you use Identipix from another country, your information is handled in Canada.
 
-## Other services involved
+## Your rights
 
-- **Google Drive** holds the photos. Opening or downloading a photo happens on Google, under Google's own privacy policy.
-- **Cloudflare** carries traffic between you and the server (a tunnel), so it can see that traffic as it passes.
-- Face detection and matching run on the server itself. No selfie or photo is sent to any AI service.
+You can ask us to access, correct or delete your information, to withdraw your agreement, or to stop using it. If you are in the EU or UK, you also have the rights described in the GDPR, including to object and to complain to your data protection authority. If you are in Canada, you can complain to the Office of the Privacy Commissioner of Canada. We do not sell or share personal information, so there is nothing to opt out of.
 
-## How long we keep data
+**How to ask.** Email **contact@identipix.com** with the event link. We reply within 30 days.
 
-Events and their fingerprints are deleted automatically after 30 days, or immediately when the organizer deletes the event. The operator of a self-hosted copy may change the 30 days.
-
-## Your choices
-
-- You do not have to take a selfie. Highlights and the "View all photos" link work without one.
-- To have an event's data removed, ask the organizer to delete it, or write to us at the address below. Fingerprints are not linked to a name or account, so removal is done per event, not per person.
-- If you do not want to appear in an event's photos, ask the organizer to remove them from the Drive folder.
+**An honest limit.** Fingerprints are not linked to a name or account, so we cannot look you up by who you are. With the event link we can delete that whole event's data, which removes every fingerprint in it. We may ask for proof that the request is yours or comes from the organizer.
 
 ## For organizers
 
-You are responsible for having the right to share the photos and for telling guests that their selfie will be used to find their photos. A short sign at the event is enough, for example: "Photos here are found with face matching. Your selfie is processed in memory and never stored."
+You choose which photos to upload. You must have the right to share them, and you should tell guests that face matching is used (the page asks every guest to agree, but a sign at the event helps). Please do not use Identipix for photos of children unless their parent or guardian agrees. Anyone with your event link can open the "View all photos" link, so only share the link with people who may see the folder.
 
-## Self-hosted copies
+## Children
 
-Identipix is open source. If someone else runs their own copy, they are the one responsible for that copy's data. This policy describes how the software behaves by default.
+Identipix is not meant for children under 13, and guests under 16 should use it with a parent or guardian.
+
+## Open source
+
+Identipix is open source. This policy covers the hosted service at identipix.com. If someone runs their own copy, they are responsible for that copy's data and this policy does not cover it.
+
+## Changes
+
+If we change this policy in a meaningful way, we will update the date above and, for changes that affect biometric data, ask for your agreement again. Older versions are in the repository history.
 
 ## Contact
 

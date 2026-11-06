@@ -38,10 +38,20 @@ def _run(event_id: str) -> None:
             if ev is None:
                 return
             try:
+                faces.check_models()
+            except Exception as e:
+                log.error("face models unavailable: %s", e)
+                db.update_event(event_id, status="error", error="Face matching is temporarily unavailable. Please try again later.")
+                return
+            try:
                 images = drive.list_images(ev["folder_id"])
             except Exception as e:
                 log.error("listing failed for %s: %s", event_id, e)
                 db.update_event(event_id, status="error", error=str(e))
+                return
+            if len(images) > config.MAX_PHOTOS:
+                msg = f"This folder has {len(images)} photos. The limit is {config.MAX_PHOTOS}. Split it into smaller folders."
+                db.update_event(event_id, status="error", error=msg)
                 return
             known = db.processed_file_ids(event_id)
             todo = [f for f in images if f["id"] not in known]
