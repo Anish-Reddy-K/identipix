@@ -1,6 +1,6 @@
 /* Shared site footer (one place for links, so the three pages stay in sync). */
 (function () {
-  var REPO = "https://github.com/Anish-Reddy-K/identipix-v2";
+  var REPO = "https://github.com/Anish-Reddy-K/identipix";
   var EMAIL = "contact@identipix.com";
   var COPY = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16V5a2 2 0 0 1 2-2h11"/></svg>';
   var CHECK = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';

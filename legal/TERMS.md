@@ -33,7 +33,7 @@ Identipix is provided "as is", without promises about availability or accuracy. 
 
 ## Open source
 
-The software is open source under the MIT license: https://github.com/Anish-Reddy-K/identipix-v2
+The software is open source under the MIT license: https://github.com/Anish-Reddy-K/identipix
 
 ## Changes
 

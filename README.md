@@ -3,7 +3,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-D81B60"></a>
-  <a href="https://github.com/Anish-Reddy-K/identipix-v2/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/Anish-Reddy-K/identipix-v2?style=flat&color=8E24AA"></a>
+  <a href="https://github.com/Anish-Reddy-K/identipix/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/Anish-Reddy-K/identipix?style=flat&color=8E24AA"></a>
 </p>
 
 ## Why
