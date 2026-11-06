@@ -89,6 +89,8 @@ Issues and pull requests are welcome. If Identipix helped you, a star on GitHub 
 
 ## Credits
 
+Built with [Claude](https://github.com/claude), Anthropic's AI assistant, as a pair programmer for the code, tests and docs.
+
 Models: YuNet (MIT) and SFace (Apache-2.0) from OpenCV Zoo. Fonts: Bricolage Grotesque and Inter (SIL OFL), self-hosted. Soft (neumorphic) surfaces use the colours and shadows of Themesberg's [Neumorphism UI](https://github.com/themesberg/neumorphism-ui-bootstrap) (MIT). Social icons from [Simple Icons](https://simpleicons.org) (CC0).
 
 MIT licensed. Made with love in Waterloo, Canada.
