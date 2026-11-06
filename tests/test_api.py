@@ -210,6 +210,11 @@ def test_folder_with_no_photos_is_ready_with_zero(client, monkeypatch):
     assert d["status"] == "ready" and d["total"] == 0 and d["done"] == 0
 
 
+def test_create_page_explains_how_to_share_the_folder(client):
+    html = client.get("/").text
+    assert "How to set up your folder" in html and "Anyone with the link" in html
+
+
 def test_healthz(client):
     assert client.get("/healthz").json() == {"ok": True}
     assert client.head("/healthz").status_code == 200  # uptime monitors often use HEAD
