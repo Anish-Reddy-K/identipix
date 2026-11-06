@@ -26,6 +26,10 @@
 
 <!-- Demo video goes here -->
 
+## Share your folder
+
+In Google Drive: right-click the folder, choose **Share**, set **General access** to **Anyone with the link** (Viewer), and copy the link. Up to 3,000 photos per event. Only photos are used, videos are skipped.
+
 ## How it works
 
 1. Paste a public Google Drive folder at [identipix.com](https://identipix.com). Get an event link and QR code.

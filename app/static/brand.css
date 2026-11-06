@@ -171,3 +171,11 @@ input[type=checkbox]:focus-visible{outline:2px solid var(--purple);outline-offse
 input[type=checkbox]:focus:not(:focus-visible){outline:none}
 #consent h2{margin-top:0}
 #consent p{margin:0;color:var(--text-2)}
+
+/* step-by-step guide (create page) */
+.guide h2{margin:0 0 14px;font-size:19px}
+.steps{list-style:none;counter-reset:step;margin:0;padding:0;display:grid;gap:14px}
+.steps li{counter-increment:step;position:relative;padding-left:44px;min-height:30px;color:var(--text);line-height:1.45}
+.steps li::before{content:counter(step);position:absolute;left:0;top:-1px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;background:var(--gradient);box-shadow:var(--shadow-light)}
+.steps b{color:var(--heading)}
+.guide .hint{margin:18px 0 0}
