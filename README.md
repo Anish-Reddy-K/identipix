@@ -1,10 +1,34 @@
-<h1 align="center">Identipix</h1>
-<p align="center"><b>Photos that find you.</b><br>Guests take a selfie and see only the event photos they appear in. Free, open source, self-hosted.</p>
+<p align="center">
+  <a href="https://github.com/Anish-Reddy-K/identipix">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="app/static/brand/logo-white.png">
+      <img src="app/static/brand/logo.png" alt="Identipix" width="300">
+    </picture>
+  </a>
+</p>
+
+<h3 align="center">Photos that find you.</h3>
+
+<p align="center">
+  Guests take a selfie and see only the event photos they appear in.<br>
+  Free, open source and self-hosted. Photos never leave your Google Drive.
+</p>
 
 <p align="center">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-D81B60"></a>
   <a href="https://github.com/Anish-Reddy-K/identipix/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/Anish-Reddy-K/identipix?style=flat&color=8E24AA"></a>
+  <img alt="Selfies never stored" src="https://img.shields.io/badge/selfies-never%20stored-D81B60">
+  <img alt="Self-hosted" src="https://img.shields.io/badge/self--hosted-8E24AA">
 </p>
+
+<p align="center">
+  <a href="#how-it-works">How it works</a> &nbsp;&middot;&nbsp;
+  <a href="#privacy-by-design">Privacy</a> &nbsp;&middot;&nbsp;
+  <a href="#self-host-in-5-minutes">Self-host</a> &nbsp;&middot;&nbsp;
+  <a href="https://github.com/Anish-Reddy-K/identipix/issues">Issues</a>
+</p>
+
+<!-- Demo video goes here -->
 
 ## Why
 
