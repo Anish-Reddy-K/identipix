@@ -9,6 +9,7 @@ import cv2
 import numpy as np
 import segno
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 
 from . import config, db, drive, faces, indexer
@@ -188,3 +189,6 @@ def delete_event(event_id: str, t: str = ""):
     db.delete_event(event_id)
     matcher.forget(event_id)
     return Response(status_code=204)
+
+
+app.mount("/static", StaticFiles(directory=STATIC), name="static")  # brand.css, logo, fonts
