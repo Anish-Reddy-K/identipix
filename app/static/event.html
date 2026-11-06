@@ -62,6 +62,7 @@ async function loadInfo() {
     if (key !== hlKey) { hlKey = key; fill($("hlGrid"), d.highlights, "Event photo"); $("hl").hidden = !d.highlights.length; }
     const n = $("notice");
     if (d.status === "indexing") { n.hidden = false; n.textContent = `Still processing photos (${d.done}/${d.total}) - results may be incomplete`; }
+    else if (d.status === "ready" && d.total === 0) { n.hidden = false; n.textContent = "This event has no photos yet."; }
     else n.hidden = true;
   } catch {}
 }

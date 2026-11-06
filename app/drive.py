@@ -69,7 +69,7 @@ def list_images(folder_id: str) -> list[dict]:
         while True:
             params = {
                 "q": f"'{fid}' in parents and trashed=false",
-                "fields": "nextPageToken,files(id,name,mimeType,thumbnailLink)",
+                "fields": "nextPageToken,files(id,name,mimeType,thumbnailLink,size)",
                 "pageSize": 1000,
                 "supportsAllDrives": "true",
                 "includeItemsFromAllDrives": "true",
@@ -94,6 +94,8 @@ def list_images(folder_id: str) -> list[dict]:
 
 
 def _decode(content: bytes):
+    if not content:  # an empty file is not an image
+        return None
     img = cv2.imdecode(np.frombuffer(content, np.uint8), cv2.IMREAD_COLOR)
     if img is None:
         return None
@@ -115,6 +117,8 @@ def fetch_image(file: dict):
                 return img
         except httpx.HTTPError:
             pass
+    if int(file.get("size") or 0) > config.MAX_DOWNLOAD_MB * 1024 * 1024:  # no preview and too big to download safely
+        raise DriveError(f"{file.get('name')} is too large to analyze")
     r = _get(f"{API}/{file['id']}", params={"alt": "media", "key": config.GOOGLE_API_KEY})
     if r.status_code != 200:
         raise DriveError(f"Could not download {file.get('name')} ({r.status_code})")

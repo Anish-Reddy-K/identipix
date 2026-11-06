@@ -102,7 +102,8 @@ async function loadPhotos() {
 }
 function count() { $("hlcount").textContent = picked.size ? `(${picked.size} selected)` : ""; }
 function showProgress(d) {
-  const pct = d.status === "ready" ? 100 : d.total ? Math.floor((d.done / d.total) * 100) : 0;
+  const empty = d.status === "ready" && d.total === 0;   // folder had no photos
+  const pct = empty ? 0 : d.status === "ready" ? 100 : d.total ? Math.floor((d.done / d.total) * 100) : 0;
   $("prog").dataset.state = d.status;
   $("prog").dataset.busy = d.status === "indexing" && pct < 100;   // spinner until 100%
   $("pct").firstChild.nodeValue = pct;
@@ -111,8 +112,9 @@ function showProgress(d) {
   else fill.style.width = pct + "%";
   $("track").setAttribute("aria-valuenow", pct);
   $("status").textContent = d.status === "indexing" ? (d.total && d.done >= d.total ? "Checking for new photos" : "Finding faces in your photos")
-    : d.status === "ready" ? "All set" : "Something went wrong";
+    : empty ? "No photos found" : d.status === "ready" ? "All set" : "Something went wrong";
   $("sub").textContent = d.status === "indexing" ? (d.total ? `${d.done} of ${d.total} photos` : "Reading your folder")
+    : empty ? "This folder has no photos. Check the link, or add photos and create the event again."
     : d.status === "ready" ? `${d.total} photos ready for guests` : "";
 }
 async function poll() {

@@ -92,3 +92,48 @@ def test_check_models_fails_loudly_when_models_are_missing(tmp_path, monkeypatch
 
     t = threading.Thread(target=run); t.start(); t.join()
     assert errors, "a missing model must raise, not be skipped"
+
+
+# ---- Drive edge cases: videos, odd formats, bad files ----
+class _Resp:
+    def __init__(self, code=200, content=b"", data=None):
+        self.status_code, self.content, self._data = code, content, data
+
+    def json(self):
+        return self._data
+
+
+def test_list_images_skips_non_photos_and_follows_pages_and_folders(monkeypatch):
+    pages = {
+        ("root", None): {"nextPageToken": "p2", "files": [
+            {"id": "v", "name": "clip.mp4", "mimeType": "video/mp4"},
+            {"id": "d", "name": "a.pdf", "mimeType": "application/pdf"},
+            {"id": "g", "name": "sheet", "mimeType": "application/vnd.google-apps.spreadsheet"},
+            {"id": "s", "name": "link", "mimeType": "application/vnd.google-apps.shortcut"},
+            {"id": "i1", "name": "a.jpg", "mimeType": "image/jpeg"},
+            {"id": "sub", "name": "Day 2", "mimeType": "application/vnd.google-apps.folder"}]},
+        ("root", "p2"): {"files": [
+            {"id": "i2", "name": "b.heic", "mimeType": "image/heic"},
+            {"id": "au", "name": "s.mp3", "mimeType": "audio/mpeg"}]},
+        ("sub", None): {"files": [
+            {"id": "i3", "name": "c.webp", "mimeType": "image/webp"},
+            {"id": "v2", "name": "m.mov", "mimeType": "video/quicktime"}]},
+    }
+    monkeypatch.setattr(drive, "_get", lambda url, **kw: _Resp(data=pages[(kw["params"]["q"].split("'")[1], kw["params"].get("pageToken"))]))
+    assert sorted(f["name"] for f in drive.list_images("root")) == ["a.jpg", "b.heic", "c.webp"]
+
+
+@pytest.mark.parametrize("content", [b"", b"not an image at all"])
+def test_undecodable_files_raise_drivererror_not_a_crash(monkeypatch, content):
+    monkeypatch.setattr(drive, "_get", lambda url, **kw: _Resp(200, content))
+    with pytest.raises(drive.DriveError):
+        drive.fetch_image({"id": "x", "name": "bad.jpg"})
+
+
+def test_huge_original_without_a_preview_is_skipped(monkeypatch):
+    called = []
+    monkeypatch.setattr(drive, "_get", lambda url, **kw: called.append(url) or _Resp(200, b"x"))
+    big = {"id": "x", "name": "huge.tif", "size": str((config.MAX_DOWNLOAD_MB + 1) * 1024 * 1024)}
+    with pytest.raises(drive.DriveError, match="too large"):
+        drive.fetch_image(big)
+    assert called == []  # never even started the download

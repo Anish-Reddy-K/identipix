@@ -203,6 +203,13 @@ def test_pages_use_versioned_asset_urls(client):
         assert "/static/brand.css?v=" in html and "/static/chrome.js?v=" in html
 
 
+def test_folder_with_no_photos_is_ready_with_zero(client, monkeypatch):
+    monkeypatch.setattr(drive, "list_images", lambda fid: [])
+    eid = client.post("/api/events", json={"folder_url": FOLDER}).json()["id"]
+    d = _wait_ready(client, eid)
+    assert d["status"] == "ready" and d["total"] == 0 and d["done"] == 0
+
+
 def test_healthz(client):
     assert client.get("/healthz").json() == {"ok": True}
     assert client.head("/healthz").status_code == 200  # uptime monitors often use HEAD
