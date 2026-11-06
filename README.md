@@ -34,7 +34,7 @@
 
 ## Privacy
 
-- Selfies are matched in memory and never saved.
+- Guests agree to face matching first. Selfies are matched in memory and never saved.
 - Photos stay in your Drive. Only face fingerprints (numbers, not images) are stored.
 - Events are deleted after 30 days, or any time by the organizer.
 - No accounts, cookies or analytics.
@@ -43,7 +43,7 @@
 
 ## Run your own copy (optional)
 
-Needs Docker, a Google API key (Drive API enabled) and a Cloudflare tunnel (camera access needs HTTPS).
+You can run Identipix yourself instead of using identipix.com. You need Docker, a Google API key (Drive API enabled) and a Cloudflare tunnel (camera access needs HTTPS).
 
 ```
 cp .env.example .env     # add GOOGLE_API_KEY, PUBLIC_BASE_URL, TUNNEL_TOKEN

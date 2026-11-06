@@ -16,3 +16,4 @@ MAX_CONCURRENT_EVENTS = int(os.getenv("MAX_CONCURRENT_EVENTS", "2"))
 SYNC_INTERVAL_MIN = int(os.getenv("SYNC_INTERVAL_MIN", "10"))
 MATCH_RATE_PER_MIN = int(os.getenv("MATCH_RATE_PER_MIN", "10"))
 CREATE_RATE_PER_HOUR = int(os.getenv("CREATE_RATE_PER_HOUR", "5"))
+MAX_PHOTOS = int(os.getenv("MAX_PHOTOS", "3000"))  # per event; keeps one huge folder from hogging the server

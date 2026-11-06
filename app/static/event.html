@@ -16,7 +16,13 @@
   <header class="topbar"><a class="brand" href="/" aria-label="Identipix home"><img src="/static/brand/logo.png" alt="Identipix"></a></header>
   <h1 id="title">&nbsp;</h1>
   <div id="notice" hidden></div>
-  <div id="cam">
+  <section class="box" id="consent" hidden>
+    <h2>Before your selfie</h2>
+    <p>To find your photos, Identipix turns your selfie into a face fingerprint, compares it with this event's photos, then throws it away. Your selfie is never saved.</p>
+    <label class="check"><input type="checkbox" id="agree"><span>I agree to face matching for this event. <a href="https://github.com/Anish-Reddy-K/identipix/blob/main/legal/PRIVACY.md" target="_blank" rel="noopener">Privacy Policy</a></span></label>
+    <button id="continue" type="button" disabled>Continue</button>
+  </section>
+  <div id="cam" hidden>
     <video id="video" playsinline autoplay muted hidden></video>
     <button id="shoot" hidden>Take selfie</button>
     <div id="fallback" hidden>
@@ -85,10 +91,11 @@ function toBlob(source, w, h) {
 
 async function send(blob) {
   $("msg").className = ""; $("msg").textContent = "Looking for your photos...";
-  const fd = new FormData(); fd.append("selfie", blob, "selfie.jpg");
+  const fd = new FormData(); fd.append("selfie", blob, "selfie.jpg"); fd.append("consent", "yes");
   try {
     const r = await fetch(`/api/events/${id}/match`, {method: "POST", body: fd});
     const d = await r.json().catch(() => ({}));
+    if (r.status === 400 && d.error === "consent_required") { sessionStorage.removeItem("consent"); return gate(); }
     if (r.status === 422) return fail("Couldn't see a face - try again.");
     if (r.status === 429) return fail("Too many tries. Wait a minute and try again.");
     if (!r.ok) return fail(d.detail || "Something went wrong. Try again.");
@@ -174,7 +181,15 @@ $("file").onchange = async (e) => {
 $("retake").onclick = startCamera;
 
 loadInfo(); setInterval(loadInfo, 5000);
-startCamera();
+// face matching starts only after the guest agrees (remembered for this tab only)
+function gate() {
+  const ok = sessionStorage.getItem("consent") === "1";
+  $("consent").hidden = ok; $("cam").hidden = !ok;
+  if (ok) startCamera();
+}
+$("agree").onchange = () => { $("continue").disabled = !$("agree").checked; };
+$("continue").onclick = () => { sessionStorage.setItem("consent", "1"); gate(); };
+gate();
 </script>
 </body>
 </html>

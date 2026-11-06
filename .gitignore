@@ -6,3 +6,6 @@ models/*.onnx
 eval/labels.json
 /data/
 tests/data/
+compose.override.yml
+deploy/
+

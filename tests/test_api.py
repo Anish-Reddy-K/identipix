@@ -64,7 +64,7 @@ def test_full_flow(client, monkeypatch):
     d = _wait_ready(client, eid)
     assert d["status"] == "ready" and d["done"] == d["total"] == 2 and d["name"] == "Test folder"
 
-    r = client.post(f"/api/events/{eid}/match", files={"selfie": ("s.jpg", _selfie_jpeg(client), "image/jpeg")})
+    r = client.post(f"/api/events/{eid}/match", files={"selfie": ("s.jpg", _selfie_jpeg(client), "image/jpeg")}, data={"consent": "yes"})
     assert r.status_code == 200
     photos = r.json()["photos"]
     assert [p["file_id"] for p in photos] == ["crowd"]
@@ -73,13 +73,13 @@ def test_full_flow(client, monkeypatch):
 
     # below the strong cut-off but above the floor -> "maybe", not "photos"
     monkeypatch.setattr(config, "STRONG_THRESHOLD", 1.1)
-    r = client.post(f"/api/events/{eid}/match", files={"selfie": ("s.jpg", _selfie_jpeg(client), "image/jpeg")})
+    r = client.post(f"/api/events/{eid}/match", files={"selfie": ("s.jpg", _selfie_jpeg(client), "image/jpeg")}, data={"consent": "yes"})
     assert r.json()["photos"] == [] and [p["file_id"] for p in r.json()["maybe"]] == ["crowd"]
     monkeypatch.setattr(config, "STRONG_THRESHOLD", 0.5)
 
     # no face -> 422
     blank = cv2.imencode(".jpg", client.images["blank"])[1].tobytes()
-    r = client.post(f"/api/events/{eid}/match", files={"selfie": ("s.jpg", blank, "image/jpeg")})
+    r = client.post(f"/api/events/{eid}/match", files={"selfie": ("s.jpg", blank, "image/jpeg")}, data={"consent": "yes"})
     assert r.status_code == 422 and r.json() == {"error": "no_face"}
 
     # thumbnail proxy: cached, event photos only
@@ -163,6 +163,26 @@ def test_rate_limit(client, monkeypatch):
     monkeypatch.setattr(config, "CREATE_RATE_PER_HOUR", 2)
     codes = [client.post("/api/events", json={"folder_url": FOLDER}).status_code for _ in range(3)]
     assert codes == [201, 201, 429]
+
+
+def test_match_requires_consent(client):
+    eid = client.post("/api/events", json={"folder_url": FOLDER}).json()["id"]
+    _wait_ready(client, eid)
+    for data in ({}, {"consent": "no"}):
+        r = client.post(f"/api/events/{eid}/match", files={"selfie": ("s.jpg", _selfie_jpeg(client), "image/jpeg")}, data=data)
+        assert r.status_code == 400 and r.json() == {"error": "consent_required"}
+
+
+def test_folder_over_the_photo_limit_is_refused(client, monkeypatch):
+    monkeypatch.setattr(config, "MAX_PHOTOS", 1)  # the fake folder has 2 photos
+    eid = client.post("/api/events", json={"folder_url": FOLDER}).json()["id"]
+    d = _wait_ready(client, eid)
+    assert d["status"] == "error" and "limit is 1" in d["error"]
+    assert db.processed_file_ids(eid) == set()
+
+
+def test_healthz(client):
+    assert client.get("/healthz").json() == {"ok": True}
 
 
 def test_unknown_event_404(client):

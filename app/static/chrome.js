@@ -52,6 +52,7 @@
         '<nav class="footer-links" aria-label="Footer">' +
           '<a href="' + REPO + '/blob/main/legal/PRIVACY.md" target="_blank" rel="noopener">Privacy Policy</a>' +
           '<a href="' + REPO + '/blob/main/legal/TERMS.md" target="_blank" rel="noopener">Terms of Service</a>' +
+          '<a href="' + REPO + '#run-your-own-copy-optional" target="_blank" rel="noopener">Self-host</a>' +
           '<span class="footer-copy">&copy; ' + new Date().getFullYear() + " Identipix</span>" +
         "</nav>" +
         '<p class="footer-place">Made with ' + HEART + ' in Waterloo, Canada</p>' +
