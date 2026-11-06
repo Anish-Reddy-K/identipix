@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Event admin | Identipix</title>
+<link rel="icon" type="image/png" href="/static/brand/mark.png">
+<link rel="preload" href="/static/brand/inter.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/brand.css">
+<script src="/static/chrome.js" defer></script>
+<meta name="theme-color" content="#e6e7ee">
+</head>
+<body>
+<main id="app">
+  <header class="topbar"><a class="brand" href="/" aria-label="Identipix home"><img src="/static/brand/logo.png" alt="Identipix"></a></header>
+  <div class="bookmark" role="note">
+    <span class="bm-icon"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></span>
+    <div><b>Bookmark this page</b><span>It is the only way to manage this event.</span></div>
+  </div>
+  <h1 id="title">Loading...</h1>
+  <div class="box progress-card" id="prog" data-state="indexing" data-busy="true">
+    <span class="spinner" role="status" aria-label="Working"></span>
+    <div class="prog-head">
+      <div class="prog-pct" id="pct">0<span>%</span></div>
+      <div>
+        <div class="prog-title" id="status">Getting started</div>
+        <div class="hint" id="sub"></div>
+      </div>
+    </div>
+    <div class="track" id="track" role="progressbar" aria-label="Photos processed" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div class="fill" id="fill"></div>
+    </div>
+    <div id="err" class="err"></div>
+  </div>
+  <div class="box" id="share">
+    <b>Event link</b>
+    <div class="row" style="margin-top:8px"><input id="link" readonly aria-label="Event link"><button id="copy">Copy</button></div>
+    <div class="qr-row">
+      <img class="qr" id="qr" alt="QR code for the event link">
+      <button class="alt" id="dlqr" type="button"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Download QR</button>
+    </div>
+  </div>
+  <div class="box" id="hlbox" hidden>
+    <b>Highlights</b> <span id="hlcount" class="hint"></span>
+    <p class="hint">Pick photos every guest should see, like the venue or the food. Tap a photo to add or remove it.</p>
+    <div class="grid" id="hlgrid"></div>
+  </div>
+  <button class="danger" id="del">Delete event</button>
+</main>
+<footer id="site-footer"></footer>
+<script>
+const id = location.pathname.split("/").pop();
+const t = new URLSearchParams(location.search).get("t") || "";
+const $ = (s) => document.getElementById(s);
+$("link").value = location.origin + "/e/" + id;
+$("qr").src = `/api/events/${id}/qr.svg?t=${encodeURIComponent(t)}`;
+$("copy").onclick = async () => {
+  try { await navigator.clipboard.writeText($("link").value); } catch { $("link").select(); document.execCommand("copy"); }
+  $("copy").textContent = "Copied"; setTimeout(() => $("copy").textContent = "Copy", 1500);
+};
+$("dlqr").onclick = async () => {   // QR as a 1024px PNG (white background, ready to print)
+  const svg = await (await fetch($("qr").src)).text();
+  const url = URL.createObjectURL(new Blob([svg], {type: "image/svg+xml"}));
+  const img = new Image();
+  await new Promise((ok, no) => { img.onload = ok; img.onerror = no; img.src = url; });
+  const c = document.createElement("canvas"); c.width = c.height = 1024;
+  const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, 1024, 1024);
+  x.imageSmoothingEnabled = false; x.drawImage(img, 0, 0, 1024, 1024);
+  URL.revokeObjectURL(url);
+  c.toBlob((b) => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(b);
+    a.download = ($("title").textContent || "event").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-qr.png";
+    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }, "image/png");
+};
+let timer, wasIndexing = true, picked = new Set();
+async function loadPhotos() {
+  const r = await fetch(`/api/events/${id}/photos?t=${encodeURIComponent(t)}`);
+  if (!r.ok) return;
+  const {photos} = await r.json();
+  picked = new Set(photos.filter((p) => p.highlight).map((p) => p.file_id));
+  const g = $("hlgrid"); g.innerHTML = "";
+  for (const p of photos) {
+    const b = document.createElement("button");
+    b.type = "button"; b.title = p.name; b.className = picked.has(p.file_id) ? "on" : "";
+    const img = document.createElement("img");
+    img.loading = "lazy"; img.alt = p.name; img.src = `/api/thumb/${id}/${encodeURIComponent(p.file_id)}`;
+    b.appendChild(img);
+    b.onclick = async () => {
+      const on = !picked.has(p.file_id);
+      on ? picked.add(p.file_id) : picked.delete(p.file_id);
+      b.classList.toggle("on", on); count();
+      const res = await fetch(`/api/events/${id}/highlights?t=${encodeURIComponent(t)}`, {
+        method: "PUT", headers: {"Content-Type": "application/json"}, body: JSON.stringify({file_ids: [...picked]})
+      });
+      if (!res.ok) { on ? picked.delete(p.file_id) : picked.add(p.file_id); b.classList.toggle("on", !on); count(); }
+    };
+    g.appendChild(b);
+  }
+  $("hlbox").hidden = !photos.length; count();
+}
+function count() { $("hlcount").textContent = picked.size ? `(${picked.size} selected)` : ""; }
+function showProgress(d) {
+  const pct = d.status === "ready" ? 100 : d.total ? Math.floor((d.done / d.total) * 100) : 0;
+  $("prog").dataset.state = d.status;
+  $("prog").dataset.busy = d.status === "indexing" && pct < 100;   // spinner until 100%
+  $("pct").firstChild.nodeValue = pct;
+  const fill = $("fill");
+  if (!showProgress.seen) { fill.style.transition = "none"; fill.style.width = pct + "%"; fill.offsetWidth; fill.style.transition = ""; showProgress.seen = true; }  // first paint: no grow-in
+  else fill.style.width = pct + "%";
+  $("track").setAttribute("aria-valuenow", pct);
+  $("status").textContent = d.status === "indexing" ? (d.total && d.done >= d.total ? "Checking for new photos" : "Finding faces in your photos")
+    : d.status === "ready" ? "All set" : "Something went wrong";
+  $("sub").textContent = d.status === "indexing" ? (d.total ? `${d.done} of ${d.total} photos` : "Reading your folder")
+    : d.status === "ready" ? `${d.total} photos ready for guests` : "";
+}
+async function poll() {
+  const r = await fetch(`/api/events/${id}`);
+  if (r.status === 404) { $("app").innerHTML = "<h1>Event not found</h1><p>It may have been deleted or expired.</p>"; return; }
+  const d = await r.json();
+  $("title").textContent = d.name || "Event";
+  showProgress(d);
+  $("err").textContent = d.error || "";
+  if (wasIndexing && d.status !== "indexing") loadPhotos();   // list is complete once indexing ends
+  wasIndexing = d.status === "indexing";
+  if (d.status === "indexing") timer = setTimeout(poll, 2000);
+}
+$("del").onclick = async () => {
+  if (!confirm("Delete this event? The event link will stop working.")) return;
+  const r = await fetch(`/api/events/${id}?t=${encodeURIComponent(t)}`, {method: "DELETE"});
+  $("app").innerHTML = r.ok ? "<h1>Deleted</h1>" : "<h1>Could not delete</h1><p>Check that you opened the full admin link.</p>";
+  clearTimeout(timer);
+};
+poll();
+</script>
+</body>
+</html>
