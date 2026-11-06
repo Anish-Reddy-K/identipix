@@ -24,7 +24,13 @@
   <a href="https://identipix.com"><img alt="Try it free at identipix.com" src="https://img.shields.io/badge/Try%20it%20free-identipix.com-D81B60?style=for-the-badge"></a>
 </p>
 
-<!-- Demo video goes here -->
+<p align="center">
+  <a href="https://youtu.be/h4Wpq68xWaE">
+    <img src="docs/demo-thumbnail.png" alt="Watch the 2 minute demo" width="640">
+  </a>
+  <br>
+  <sub>Watch the 2 minute demo</sub>
+</p>
 
 ## Share your folder
 
