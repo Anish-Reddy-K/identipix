@@ -64,7 +64,7 @@ def _base(request: Request) -> str:
     return config.PUBLIC_BASE_URL or str(request.base_url).rstrip("/")
 
 
-@app.get("/healthz")
+@app.api_route("/healthz", methods=["GET", "HEAD"])  # uptime monitors often use HEAD
 def healthz():
     db.get_event("healthz")  # touches the database
     try:
