@@ -5,6 +5,14 @@ services:
     volumes: ["identipix-data:/data"]
     ports: ["127.0.0.1:8080:8080"]   # this machine only; the public goes through the tunnel
     restart: unless-stopped
+    read_only: true                      # the app can only write to /data and /tmp
+    tmpfs: ["/tmp:size=256m"]
+    cap_drop: [ALL]                      # no extra Linux powers
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 4g                        # indexing peaks around 2 GB
+    memswap_limit: 4g
+    pids_limit: 512
+    cpus: 6                              # leave cores for the rest of the machine
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=3)"]
       interval: 30s
@@ -16,6 +24,11 @@ services:
   tunnel:
     image: cloudflare/cloudflared:latest
     command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+    pids_limit: 128
     depends_on:
       app: {condition: service_healthy}
     restart: unless-stopped
