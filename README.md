@@ -24,7 +24,7 @@
   <a href="https://identipix.com"><img alt="Try it free at identipix.com" src="https://img.shields.io/badge/Try%20it%20free-identipix.com-D81B60?style=for-the-badge"></a>
 </p>
 
-https://github.com/user-attachments/assets/58850a18-a7ef-49cd-913d-202b62bc02f7
+https://github.com/user-attachments/assets/7b244e8b-cce6-49cf-b91d-8395675fd4d7
 
 <p align="center"><sub><a href="https://youtu.be/h4Wpq68xWaE">Watch on YouTube</a></sub></p>
 
