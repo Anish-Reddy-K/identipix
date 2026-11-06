@@ -191,6 +191,11 @@ def test_broken_models_fail_the_event_not_silently(client, monkeypatch):
     assert client.get("/healthz").status_code == 503
 
 
+def test_static_files_have_a_short_cache(client):
+    r = client.get("/static/brand.css")
+    assert r.status_code == 200 and r.headers["cache-control"] == "public, max-age=300"
+
+
 def test_healthz(client):
     assert client.get("/healthz").json() == {"ok": True}
 

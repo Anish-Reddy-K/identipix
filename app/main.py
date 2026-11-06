@@ -203,4 +203,13 @@ def delete_event(event_id: str, t: str = ""):
     return Response(status_code=204)
 
 
-app.mount("/static", StaticFiles(directory=STATIC), name="static")  # brand.css, logo, fonts
+class Static(StaticFiles):
+    """Short cache, so a CDN in front (Cloudflare) picks up updates within minutes, not hours."""
+
+    async def get_response(self, path, scope):
+        r = await super().get_response(path, scope)
+        r.headers["Cache-Control"] = "public, max-age=300"
+        return r
+
+
+app.mount("/static", Static(directory=STATIC), name="static")  # brand.css, logo, fonts
