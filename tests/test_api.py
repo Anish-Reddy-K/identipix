@@ -205,6 +205,7 @@ def test_pages_use_versioned_asset_urls(client):
 
 def test_healthz(client):
     assert client.get("/healthz").json() == {"ok": True}
+    assert client.head("/healthz").status_code == 200  # uptime monitors often use HEAD
 
 
 def test_unknown_event_404(client):
