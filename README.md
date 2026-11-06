@@ -57,7 +57,7 @@ uv pip install --python .venv/bin/python fastapi "uvicorn[standard]" opencv-pyth
 .venv/bin/python -m pytest
 ```
 
-For local runs, download the two models into `models/` (URLs in the `Dockerfile`).
+For local runs, download the two models into `models/` (URLs in the `Dockerfile`). The first test run downloads one sample photo into `tests/data/` (it shows real people, so it is not stored in this repo).
 
 ## Contributing
 
