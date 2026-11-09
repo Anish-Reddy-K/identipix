@@ -34,6 +34,7 @@
   <div id="results" hidden>
     <div id="count"></div>
     <div class="grid" id="grid"></div>
+    <button id="saveAll" type="button" hidden></button>
     <details id="maybeBox" hidden>
       <summary id="maybeSum"></summary>
       <div class="grid" id="maybeGrid"></div>
@@ -105,8 +106,44 @@ async function send(blob) {
 }
 function fail(m) {
   $("msg").className = "err"; $("msg").textContent = m; $("results").hidden = false;
-  $("count").textContent = ""; $("grid").innerHTML = ""; $("maybeBox").hidden = true;
+  $("count").textContent = ""; $("grid").innerHTML = ""; $("maybeBox").hidden = true; $("saveAll").hidden = true;
 }
+
+// Save all: loads every match once, then hands them to the phone's share sheet (Save to Photos)
+// or downloads them one by one on a computer. Only the sure matches, not "might be you".
+let found = [], files = null;
+const saveLabel = () => canSaveToPhotos ? "Save all to Photos" : "Download all";
+async function saveAll() {
+  const btn = $("saveAll");
+  btn.disabled = true;
+  try {
+    if (!files) {
+      const got = [];
+      for (let i = 0; i < found.length; i++) {
+        btn.textContent = `Preparing ${i + 1} of ${found.length}...`;
+        const r = await fetch(`/api/thumb/${id}/${encodeURIComponent(found[i].file_id)}?s=2048`);
+        if (!r.ok) throw new Error("fetch");
+        const name = (found[i].name || `photo-${i + 1}`).replace(/\.[^.]+$/, "") + ".jpg";
+        got.push(new File([await r.blob()], name, {type: "image/jpeg"}));
+      }
+      files = got;
+      // phones only allow sharing straight after a tap, and loading took a while: ask for one more tap
+      if (canSaveToPhotos) { btn.textContent = `Tap to save ${files.length} photos`; btn.disabled = false; return; }
+    }
+    if (canSaveToPhotos && navigator.canShare({files})) await navigator.share({files});
+    else for (const f of files) {
+      const a = document.createElement("a"), u = URL.createObjectURL(f);
+      a.href = u; a.download = f.name; a.click();
+      setTimeout(() => URL.revokeObjectURL(u), 2000);
+      await new Promise((ok) => setTimeout(ok, 400));  // browsers drop downloads fired in the same instant
+    }
+  } catch (err) {
+    if (err.name === "NotAllowedError") { btn.textContent = `Tap to save ${files.length} photos`; btn.disabled = false; return; }
+    if (err.name !== "AbortError") { $("msg").className = "err"; $("msg").textContent = "Couldn't save all. Try the single Download links."; }
+  }
+  btn.textContent = saveLabel(); btn.disabled = false;
+}
+$("saveAll").onclick = saveAll;
 
 // On phones, "Download" goes to the Files app. The share sheet can save straight to Photos.
 const canSaveToPhotos = matchMedia("(pointer:coarse)").matches && !!navigator.canShare &&
@@ -159,6 +196,8 @@ function show(photos, maybe) {
     : none ? "No photos found. Try another selfie with good light, facing the camera."
     : "No sure matches. These might be you:";
   fill($("grid"), photos);
+  found = photos; files = null;
+  $("saveAll").hidden = photos.length < 2; $("saveAll").textContent = saveLabel(); $("saveAll").disabled = false;
   const box = $("maybeBox");
   box.hidden = !maybe.length;
   box.open = !photos.length;  // nothing else to show: open it
